@@ -22,8 +22,8 @@ const HomeComponent = () => {
         try {
 
             
-            var clientID = "UljU99t3hulMhdrVGKjN1w"
-            var clientSecret = "o7vuAK_Ph6pOB06N2rM3gJRt3Qplpw"
+            var clientID = ""
+            var clientSecret = ""
             var returnCode = "statecheck"
 
             const credentials = Buffer.from(`${clientID}:${clientSecret}`).toString("base64")
