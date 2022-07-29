@@ -5,12 +5,16 @@ import { useState, useEffect } from 'react'
 
 const HomeComponent = () => {
 
+    const [selectedId, setSelectedId] = useState('')
+    const [selectedName, setSelectedName] = useState('')
+    const [selectedArticle, setSelectedArticle] = useState('')
     const [subscribers, setSubscribers] = useState([])
     const [posts, setPosts] = useState([])
+    const [postId, setPostId] = useState('')
+    const [comments, setComments] = useState([])
 
     useEffect(() => {
         getToken()
-        console.log('useEffect check')
     }, [])
 
     const getToken = async () => {
@@ -31,8 +35,6 @@ const HomeComponent = () => {
         console.log(code)
 
         try {
-
-
             var clientID = ""
             var clientSecret = ""
             var returnCode = ""
@@ -61,7 +63,6 @@ const HomeComponent = () => {
 
     const getSubscribers = async () => {
         try {
-
             axios.get('https://oauth.reddit.com/subreddits/mine/subscriber', {
                 headers: {
                     Authorization: `bearer ${localStorage.getItem('token')}`
@@ -70,11 +71,13 @@ const HomeComponent = () => {
                 .then((response) => response.data.data.children)
                 .then(subscribers => {
                     const subscribersArray = subscribers.map(subscriber => {
-                        console.log(subscriber)
-                        return subscriber.data.title
+                        return subscriber
                     })
+                    console.log(subscribersArray)
 
                     setSubscribers(subscribersArray)
+                    setSelectedId(subscribersArray[0].data.name)
+                    setSelectedName(subscribersArray[0].data.display_name_prefixed)
 
                 })
 
@@ -85,16 +88,16 @@ const HomeComponent = () => {
 
     const getPosts = async () => {
         try {
-            axios.get('https://oauth.reddit.com/best', {
+            axios.get('https://oauth.reddit.com/best?limit=100', {
                 headers: {
-                    Authorization: `bearer ${localStorage.getItem('token')}`
-                }
+                    Authorization: `bearer ${localStorage.getItem('token')}`,
+                },
             })
                 .then((response) => {
                     console.log('best response:', response)
                     // console.log('data:', response.data.data.children)
                     const posts = response.data.data.children.map(post => {
-                        return post.data.title
+                        return post
                     })
                     console.log(posts)
                     setPosts(posts)
@@ -104,22 +107,77 @@ const HomeComponent = () => {
         catch (e) { console.log('wrong', e) }
 
     }
+
+    const getComment = async () => {
+        try {
+            axios.get(`https://oauth.reddit.com/${selectedName}/comments/${postId}/${selectedArticle}?dept=1`, {
+                headers: {
+                    Authorization: `bearer ${localStorage.getItem('token')}`,
+                },
+            })
+                .then((response) => {
+                    console.log('comment response:', response)
+                    // console.log('data:', response.data.data.children)
+                    const comments = response.data[1].data.children.map(comment => {
+                        return comment
+                    })
+                    console.log(comments)
+                    setComments(comments)
+
+                })
+
+        }
+        catch (e) { console.log('wrong', e) }
+    }
     return (
         <div>
             <h1>Hi this is home component</h1>
-            {/* <button onClick={getToken}>get access token</button> */}
             <button onClick={getSubscribers}>get Subscribers</button>
             <button onClick={getPosts}>get Posts</button>
+            <button onClick={getComment}>get comment</button>
             <Link to='/'>back</Link>
             <br />
             <br />
+            <hr />
+            selected id - {selectedId} /
+            selected name - {selectedName} /
+            selected Article - {selectedArticle}
+            <hr />
 
-            Subsriber - {subscribers.length}
-            {subscribers.map(subscriber => <div key={subscriber}>{subscriber}<br /></div>)
+            Subscribers - {subscribers.length}
+            {subscribers.map(subscriber => <div key={subscriber.data.id}>
+                <button onClick={() => {
+                    setSelectedId(subscriber.data.name)
+                    setSelectedName(subscriber.data.display_name_prefixed)
+                }}>
+                    {subscriber.data.title} ::: {subscriber.data.name}<br />
+                </button>
+            </div>)
             }
 
+            full string - {`https://oauth.reddit.com/${selectedName}/comments/${postId}/${selectedArticle}`}
+            <hr />
             Posts - {posts.length}
-            {posts.map(post => <div key={post}>{post}<br /></div>)}
+            {posts.filter(post => post.data.subreddit_id === selectedId).map(post => {
+                return <div><button onClick={() => {
+                    setPostId(post.data.id)
+                    setSelectedArticle(post.data.title.replaceAll(' ', '_'))
+                }}>
+                    {post.data.id}--? /{post.data.subreddit_name_prefixed}/ {post.data.title} - {post.data.subreddit_id}
+                </button><br /></div>
+            })}
+
+
+
+            <hr />
+            Comments - {customElements.length}
+            {comments.filter(comment => comment.data.subreddit_id === selectedId)
+                .map(comment => <div key={comment.id}>
+                    {comment.data.id}--? {comment.data.body} - {comment.data.subreddit_id}
+                    <br />
+                </div>)
+            }
+
         </div >
     )
 }
