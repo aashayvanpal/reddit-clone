@@ -5,13 +5,16 @@ import './App.css';
 import {
   BrowserRouter,
   Routes,
-  Route,
-  Link
+  Route
 } from "react-router-dom";
 
-// 1. Login page
-// Use the login API to redirect the user to Reddit’s authorization page.Use a local storage mechanism to store the OAuth token returned by Reddit.
-
+/*
+  steps
+  implement react-redux ,
+  redux-saga -> just another action is dispatched after it is delayed
+  css
+  seperation of concerns
+  */
 
 function App() {
   return (

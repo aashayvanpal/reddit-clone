@@ -2,8 +2,10 @@ import { Link } from 'react-router-dom'
 import { Buffer } from 'buffer'
 import axios from 'axios'
 import { useState, useEffect } from 'react'
+import { connect } from 'react-redux'
 
-const HomeComponent = () => {
+
+const HomeComponent = (props) => {
 
     const [selectedId, setSelectedId] = useState('')
     const [selectedName, setSelectedName] = useState('')
@@ -12,10 +14,21 @@ const HomeComponent = () => {
     const [posts, setPosts] = useState([])
     const [postId, setPostId] = useState('')
     const [comments, setComments] = useState([])
+    const [count, setCount] = useState(props.count + 5)
+
+    useEffect(async () => {
+        console.log('redux check :', props)
+        setCount(props.count)
+        await getToken()
+        await getSubscribers()
+    }, [])
 
     useEffect(() => {
-        getToken()
-    }, [])
+        console.log('redux check only props :', props)
+        setCount(props.count)
+    }, [props])
+
+
 
     const getToken = async () => {
         var code = ''
@@ -35,9 +48,9 @@ const HomeComponent = () => {
         console.log(code)
 
         try {
-            var clientID = ""
-            var clientSecret = ""
-            var returnCode = ""
+            var clientID = "UljU99t3hulMhdrVGKjN1w"
+            var clientSecret = "o7vuAK_Ph6pOB06N2rM3gJRt3Qplpw"
+            var returnCode = "statecheck"
 
             const credentials = Buffer.from(`${clientID}:${clientSecret}`).toString("base64")
             console.log(credentials)
@@ -129,28 +142,33 @@ const HomeComponent = () => {
         }
         catch (e) { console.log('wrong', e) }
     }
+
+
     return (
         <div>
-            <h1>Hi this is home component</h1>
-            <button onClick={getSubscribers}>get Subscribers</button>
+            <h1>Hi this is home component - {count}</h1>
             <button onClick={getPosts}>get Posts</button>
             <button onClick={getComment}>get comment</button>
             <Link to='/'>back</Link>
             <br />
             <br />
             <hr />
+            <button onClick={() => props.increment(10)}>increment count</button>
+            <hr />
+            <hr />
             selected id - {selectedId} /
             selected name - {selectedName} /
             selected Article - {selectedArticle}
             <hr />
 
-            Subscribers - {subscribers.length}
+            You have subscribed to these reddits :-
             {subscribers.map(subscriber => <div key={subscriber.data.id}>
+                {/* ::: {subscriber.data.name}<br /> */}
                 <button onClick={() => {
                     setSelectedId(subscriber.data.name)
                     setSelectedName(subscriber.data.display_name_prefixed)
                 }}>
-                    {subscriber.data.title} ::: {subscriber.data.name}<br />
+                    {subscriber.data.title}
                 </button>
             </div>)
             }
@@ -159,11 +177,15 @@ const HomeComponent = () => {
             <hr />
             Posts - {posts.length}
             {posts.filter(post => post.data.subreddit_id === selectedId).map(post => {
+                // {/* {post.data.id}--? / */}
+                // {/* {post.data.subreddit_name_prefixed}/ */}
+                // {/* {post.data.subreddit_id} */}
                 return <div><button onClick={() => {
                     setPostId(post.data.id)
                     setSelectedArticle(post.data.title.replaceAll(' ', '_'))
                 }}>
-                    {post.data.id}--? /{post.data.subreddit_name_prefixed}/ {post.data.title} - {post.data.subreddit_id}
+
+                    {post.data.title}
                 </button><br /></div>
             })}
 
@@ -171,15 +193,26 @@ const HomeComponent = () => {
 
             <hr />
             Comments - {customElements.length}
-            {comments.filter(comment => comment.data.subreddit_id === selectedId)
-                .map(comment => <div key={comment.id}>
-                    {comment.data.id}--? {comment.data.body} - {comment.data.subreddit_id}
-                    <br />
-                </div>)
+            {comments.map(comment => <div key={comment.id}>
+                {comment.data.id}--? {comment.data.body} - {comment.data.subreddit_id}
+                <br />
+            </div>)
             }
 
         </div >
     )
 }
 
-export default HomeComponent
+const mapStateToProps = (state) => {
+    return {
+        count: state.count
+    }
+}
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        increment: (num) => { return dispatch({ type: 'INCREMENT', payload: num }) }
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(HomeComponent)
